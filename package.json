@@ -19,7 +19,9 @@
   },
   "scripts": {
     "test": "esy x Ssg",
-    "doc": "esy dune build @doc"
+    "doc": "esy dune build @doc",
+    "doc:open": "esy xdg-open '#{self.target_dir}/default/_doc/_html/index.html'"
+
   },
   "dependencies": {
     "@opam/dune": "*",
