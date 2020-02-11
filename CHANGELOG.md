@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
 
 ## [Unreleased]
+### Added
+- CONTRIBUTING.md - moved some parts from README into this file
+
+### Changed
+- README.md - moved some parts to CONTRIBUTING.md
+
 ### Fixed
 - Remove public name for example binary Ssg #3
 
