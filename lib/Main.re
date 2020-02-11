@@ -5,12 +5,7 @@ let fromMd = Fabricators.md;
 /* REFABRICATORs */
 let between = Refabricators.between;
 
-let handleFactoryResult =
-  fun
-  | Ok () => "Success!" |> Print.success
-  | Error(msg) => "Error: " ++ msg |> Print.error;
-
-let to_ = (factory, fabrics) => factory(fabrics) |> handleFactoryResult;
+let to_ = (factory, fabrics) => factory(fabrics) |> Util.handleFactoryResult;
 
 let toMany = (factories, fabrics) =>
   factories
@@ -25,7 +20,7 @@ let toMany = (factories, fabrics) =>
          },
        Ok(),
      )
-  |> handleFactoryResult;
+  |> Util.handleFactoryResult;
 
 /* FACTORIES */
 let toLog = to_(Factories.log());

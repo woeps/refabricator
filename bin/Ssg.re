@@ -1,4 +1,4 @@
-open Refabricator;
+open Refabricator.Main;
 
 let () =
   [

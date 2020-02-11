@@ -8,3 +8,6 @@ let rename: (string => string, Types.t) => Types.t;
 
 let modify: (string => string, Types.t) => Types.t;
 /** Modify the content of a fabric */
+
+let handleFactoryResult: result(unit, string) => unit;
+/** Print either error or success message */

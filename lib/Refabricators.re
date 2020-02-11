@@ -1,7 +1,6 @@
-let between=
-  ((before, after), fabrics) => {
-    fabrics
-    |> List.map((fabric, unit_) =>
-         unit_ |> fabric |> Util.modify(content => before ++ content ++ after)
-       );
-  };
+let between = ((before, after), fabrics) => {
+  fabrics
+  |> List.map((fabric, ()) =>
+       fabric() |> Util.modify(content => before ++ content ++ after)
+     );
+};
