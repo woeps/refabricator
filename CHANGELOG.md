@@ -11,10 +11,14 @@ Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Securit
 - CONTRIBUTING.md - moved some parts from README into this file
 
 ### Changed
-- README.md - moved some parts to CONTRIBUTING.md
+- README.md - moved some parts to CONTRIBUTING.md - commit fb5aefa527f13d297c87bccae179193eb847fae2
+- rename lib package to refabricator - #5
+- remove public name from binary and update test script - #3
+- rename module Refabricator to Main - #4
 
 ### Fixed
-- Remove public name for example binary Ssg #3
+- remove public name for example binary Ssg - #3
+- print errors to stderr - #2
 
 
 ## [0.0.1] - 2020-02-10
