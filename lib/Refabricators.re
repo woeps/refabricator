@@ -1,6 +1,10 @@
+let modify = (modFn, fabrics) =>
+  fabrics |> List.map((fabric, ()) => fabric() |> Util.modify(modFn));
+
 let between = ((before, after), fabrics) => {
   fabrics
-  |> List.map((fabric, ()) =>
-       fabric() |> Util.modify(content => before ++ content ++ after)
+  |> modify(
+       fun
+       | `Html(content) => `Html(before ++ content ++ after),
      );
 };

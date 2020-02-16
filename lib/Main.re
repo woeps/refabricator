@@ -5,7 +5,8 @@ let fromMd = Fabricators.md;
 /* REFABRICATORs */
 let between = Refabricators.between;
 
-let to_ = (factory, fabrics) => factory(fabrics) |> Util.handleFactoryResult;
+let to_ = (factory, fabrics) =>
+  fabrics |> factory |> Util.handleFactoryResult;
 
 let toMany = (factories, fabrics) =>
   factories

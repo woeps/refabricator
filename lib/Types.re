@@ -11,41 +11,43 @@
 type name = string;
 /** Name of the result of a fabric */
 
-type content = string;
+// type content('a) = 'a;
 /** Content of the result of a fabric */
 
-type t = (name, content);
+type t('content) = (name, 'content);
 /** Result of a fabric */
 
-type fabric = unit => t;
+type fabric('content) = unit => t('content);
 /** A fabric is a generator function for a source.
  *  The function can be called later on to actually fetch sources
  *  aka "lazyly loaded source"
  */
 
-type fabrics = list(fabric);
+type fabrics('content) = list(fabric('content));
 /** Multiple fabrics
  *  aka "multiple lazyly loaded sources"
  */
 
-type fabricator('a) = 'a => fabrics;
+type fabricator('options, 'content) = 'options => fabrics('content);
 /** Constructor of multple fabrics.
  *  Each concrete type of fabricator has it's own set of arguments.
  *  aka "loader of fabrics"
  */
 
-type refabricator('a) = ('a, fabrics) => fabrics;
+type refabricator('options, 'content, 'refabricatedContent) =
+  ('options, fabrics('content)) => fabrics('refabricatedContent);
 /** Manipulates fabrics
  *  Each concrete type of refabricator has it's own set of arguments
  *  aka "rewriter of source's content"
  */
 
-type factory('a) = ('a, fabrics) => result(unit, string);
+type factory('options, 'content) =
+  ('options, fabrics('content)) => result(unit, string);
 /** Construct an `appliedFactory`, which will process fabrics (e.g. write them to file)
  *  aka "Processor of fetched & manipulated content"
  */
 
-type appliedFactory = fabrics => result(unit, string);
+type appliedFactory('content) = fabrics('content) => result(unit, string);
 /** Construct an `appliedFactory`, which will process fabrics (e.g. write them to file)
  *  aka "Processor of fetched & manipulated content"
- */
+ */;

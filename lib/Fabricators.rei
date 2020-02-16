@@ -2,5 +2,7 @@
  *  See Types module for explanation on the namings and types.
  */
 
-let md: Types.fabricator(string);
-/** Load Markdown files from a specified (relative) path */
+type mdOpt = {path: string};
+
+let md: Types.fabricator(mdOpt, [ | `Html(string)]);
+/** Load Markdown files from a specified (relative) path */;

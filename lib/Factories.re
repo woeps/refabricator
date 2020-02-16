@@ -1,9 +1,9 @@
 let log = (_unit, fabrics) => {
   fabrics
   |> List.iter(fabric => {
-       let (name, content) = fabric();
+       let (name, `Html(content)) = fabric();
        name |> String.uppercase_ascii |> Print.emph;
-       content |> Print.log;
+       content ++ "\n" |> Print.log;
      });
   Ok();
 };

@@ -11,43 +11,49 @@
  *  |> toLog;
  */
 
-let from: list(Types.fabrics) => Types.fabrics;
+let from: list(Types.fabrics('content)) => Types.fabrics('content);
 /** Combines a list of several fabrics
  *
  *  Example:
  *  from([Fabricators.md("path1"), Fabricators.md("path2")]
  */
 
-let fromMd: Types.fabricator(string);
+let fromMd: Types.fabricator(Fabricators.mdOpt, [ | `Html(string)]);
 /** Generate fabrics for all markdown files in the given path;
  *
  *  Example:
  *  fromMd("path1")
  */
 
-let between: Types.refabricator((string, string));
+let between:
+  Types.refabricator(
+    (string, string),
+    [ | `Html(string)],
+    [ | `Html(string)],
+  );
 /** Add text before and after the fabricated content
  * Example:
  * fromMd("path1") |> between(("text-before-content", "text-after-content"))
  */
 
-let to_: (Types.appliedFactory, Types.fabrics) => unit;
+let to_: (Types.appliedFactory('content), Types.fabrics('content)) => unit;
 /** Handle success/error of a factory
  *
  *  Example:
  *  to_(Factories.log())
  */
 
-let toMany:(list(Types.appliedFactory), Types.fabrics) => unit;
+let toMany:
+  (list(Types.appliedFactory('content)), Types.fabrics('content)) => unit;
 /** Handle success/error of multiple factories
  *
  *  Example:
  *  toMany([Factories.log(), Factories.file("path")])
  */
 
-let toLog: Types.fabrics => unit;
+let toLog: Types.fabrics([ | `Html(string)]) => unit;
 /** Write all fabrics to log and print out result
  *
  *  Example:
  *  fromMd("path") |> toLog
- */
+ */;
