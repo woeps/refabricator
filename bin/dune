@@ -1,4 +1,3 @@
 (executable
   (name Ssg)
-  (public_name Ssg)
   (libraries console.lib refabricator))
