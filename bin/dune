@@ -1,3 +1,3 @@
 (executable
-  (name Ssg)
+  (name refabricate)
   (libraries console.lib refabricator))
