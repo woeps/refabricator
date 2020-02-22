@@ -24,3 +24,6 @@ let toMany = (factories, fabrics) =>
 
 /* FACTORIES */
 let toLog = to_(Factories.log());
+
+let toFiles = (writeOpts, fabrics) =>
+  fabrics |> to_(Factories.file(writeOpts));

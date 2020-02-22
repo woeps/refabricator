@@ -51,3 +51,7 @@ let toLog: Types.fabrics => unit;
  *  Example:
  *  fromMd("path") |> toLog
  */
+
+let toFiles: (Factories.writeOpt, Types.fabrics) => unit;
+/** Write all fabrics to the filesystem
+ */

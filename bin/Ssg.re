@@ -11,4 +11,4 @@ let () =
     fromMd("pages2"),
   ]
   |> from
-  |> toLog;
+  |> toFiles({path: "generated", extension: "html"});

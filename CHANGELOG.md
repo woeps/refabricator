@@ -9,6 +9,7 @@ Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Securit
 ## [Unreleased]
 ### Added
 - CONTRIBUTING.md - moved some parts from README into this file
+- Factory.file & Main.toFiles - support writing generated content to files - #1
 
 ### Changed
 - README.md - moved some parts to CONTRIBUTING.md - commit fb5aefa527f13d297c87bccae179193eb847fae2

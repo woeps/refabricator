@@ -6,7 +6,7 @@ This project uses [Esy](https://github.com/esy-ocaml/esy) to compile ReasonML to
 This project is **Work In Progress** and published to get early feedback from the community.
 
 ## Example
-### md > beween > log
+### md > between > log
 Get all markdown files of a directory, put each content into a template and write everything out as log messages.
 
 ```
@@ -22,7 +22,7 @@ let () =
   |> toLog;
 ```
 
-### 2x md > between > log
+### 2x md > between > files
 Get all markdown files of one directory and put each content into a template + get all markdown files of another directory (without template) and write everything out as log messages.
 
 ```
@@ -39,7 +39,8 @@ let () =
     fromMd("pages2"),
   ]
   |> from
-  |> toLog;
+  |> toFiles({path: "generated", extension: "html"});
+  // make sure your path/dir already exists
 ```
 
 
