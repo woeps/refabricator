@@ -1,6 +1,8 @@
 /* FABRICATORS */
 let from = Util.concat;
-let fromMd = Fabricators.md;
+
+let fromMd = path =>
+  Fabricators.localPath({path, extension: Some("md")}) |> Refabricators.md();
 
 /* REFABRICATORs */
 let between = Refabricators.between;

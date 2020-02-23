@@ -38,7 +38,7 @@ let to_: (Types.appliedFactory, Types.fabrics) => unit;
  *  to_(Factories.log())
  */
 
-let toMany:(list(Types.appliedFactory), Types.fabrics) => unit;
+let toMany: (list(Types.appliedFactory), Types.fabrics) => unit;
 /** Handle success/error of multiple factories
  *
  *  Example:
@@ -52,6 +52,6 @@ let toLog: Types.fabrics => unit;
  *  fromMd("path") |> toLog
  */
 
-let toFiles: (Factories.writeOpt, Types.fabrics) => unit;
+let toFiles: (Types.pathDescriptor, Types.fabrics) => unit;
 /** Write all fabrics to the filesystem
- */
+ */;

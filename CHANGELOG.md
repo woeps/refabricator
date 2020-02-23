@@ -6,20 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`
 
-## [Unreleased]
+## [0.0.2 - UNRELEASED]
 ### Added
 - CONTRIBUTING.md - moved some parts from README into this file
-- Factory.file & Main.toFiles - support writing generated content to files - #1
+- Factory.file & Main.toFiles - support writing generated content to files - woeps/refabricator#1
+- Types.pathDescriptor as a reusable type for in- & output - woeps/refabricator#20
+- Fabricators.localPath: create fabrics based on files on the local filesystem - woeps/refabricator#6
 
 ### Changed
-- README.md - moved some parts to CONTRIBUTING.md - commit fb5aefa527f13d297c87bccae179193eb847fae2
-- rename lib package to refabricator - #5
-- remove public name from binary and update test script - #3
-- rename module Refabricator to Main - #4
+- README.md - moved some parts to CONTRIBUTING.md - commit woeps/refabricator@fb5aefa527f13d297c87bccae179193eb847fae2
+- rename lib package to refabricator - woeps/refabricator#5
+- remove public name from binary and update test script - woeps/refabricator#3
+- rename module Refabricator to Main - woeps/refabricator#4
+- refactored Fabricators.md to Refabricators.md and use Types.pathDescriptor - woeps/refabricator#6
+- chaned Print.log to logAny and introduced new log(label, message) - woeps/refabricator#20
 
 ### Fixed
-- remove public name for example binary Ssg - #3
-- print errors to stderr - #2
+- remove public name for example binary Ssg - woeps/refabricator#3
+- print errors to stderr - woeps/refabricator#2
 
 
 ## [0.0.1] - 2020-02-10

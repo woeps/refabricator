@@ -4,6 +4,4 @@
 
 let log: Types.factory(unit);
 
-type writeOpt = {path: string, extension: string};
-
-let file: Types.factory(writeOpt);
+let file: Types.factory(Types.pathDescriptor);

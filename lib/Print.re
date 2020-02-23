@@ -9,4 +9,13 @@ let error = text =>
 
 let emph = text => Pastel.(<Pastel bold=true> text </Pastel>) |> print_endline;
 
-let log = Console.log;
+let log = (label, text) =>
+  Pastel.(
+    <Pastel color=BlueBright>
+      <Pastel bold=true> {label ++ ": "} </Pastel>
+      text
+    </Pastel>
+  )
+  |> print_endline;
+
+let logAny = Console.log;

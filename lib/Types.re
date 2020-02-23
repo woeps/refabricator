@@ -49,3 +49,11 @@ type appliedFactory = fabrics => result(unit, string);
 /** Construct an `appliedFactory`, which will process fabrics (e.g. write them to file)
  *  aka "Processor of fetched & manipulated content"
  */
+
+type pathDescriptor = {
+  path: string,
+  extension: option(string),
+};
+/** Specifies a path and an optional extension
+  * to be used by fabricators & factories which interact with fs
+  */;

@@ -2,5 +2,7 @@
  *  See Types module for explanation on the namings and types.
  */
 
-let md: Types.fabricator(string);
-/** Load Markdown files from a specified (relative) path */
+let localPath: Types.fabricator(Types.pathDescriptor);
+/** load all files from a local path with a given extension
+ *  if no extension is given all files in the given path will be loaded
+ */
