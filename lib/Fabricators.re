@@ -1,23 +1,17 @@
-module L = {
-  let src =
-    Logs.Src.create(
-      "Refabricator.Refabricators",
-      ~doc="logs events in fabricators",
-    );
-  let nameTag: Logs.Tag.def(string) =
-    Logs.Tag.def("name", ~doc="name of the element", Format.pp_print_string);
-  let name: string => Logs.Tag.set =
-    fabricatorName => Logs.Tag.(empty |> add(nameTag, fabricatorName));
-
-  let debug = m => Logs.debug(~src, m);
-  let info = m => Logs.info(~src, m);
-  let warn = m => Logs.warn(~src, m);
-  let err = m => Logs.err(~src, m);
-};
+module L = (
+  val Logs.(
+        src_log(
+          Logs.Src.create(
+            "Refabricator.Fabricators",
+            ~doc="logs events in fabricators",
+          ),
+        )
+      )
+);
 
 let localPath = (pathDescriptor: Types.pathDescriptor) => {
   let header = "Fabricators.localPath";
-  let tags = L.name("localPath");
+  let tags = Log.name("localPath");
   L.debug(m =>
     m(
       "start {path=%s, extension=%s}",
