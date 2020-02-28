@@ -18,7 +18,7 @@
     }
   },
   "scripts": {
-    "test": "esy b dune exec bin/refabricate.exe",
+    "test": "esy b dune exec bin/refabricate.exe -- -vv",
     "doc": "esy dune build @doc",
     "doc:open": "esy xdg-open '#{self.target_dir}/default/_doc/_html/index.html'"
 
