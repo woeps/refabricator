@@ -51,7 +51,7 @@ let file = (opts: Types.pathDescriptor, fabrics) => {
        try(content |> Fs.writeFile(fileName)) {
        | Sys_error(err) =>
          errors := [err, ...errors^];
-         L.err(m => m("%s", err, ~tags, ~header));
+         L.err(m => m("Error: %s", err, ~tags, ~header));
        };
      });
   L.info(m =>
