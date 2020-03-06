@@ -21,10 +21,14 @@ let filterMd = files =>
   |> List.sort(String.compare);
 
 let file2string = filename => {
+  let header = "Fs.files2string";
+
   let file = open_in(filename);
   let size = in_channel_length(file);
   let buf = Bytes.create(size);
-  really_input(file, buf, 0, size);
+  try(really_input(file, buf, 0, size)) {
+  | End_of_file => L.debug(m => m("End_of_file exception caught", ~header))
+  };
   let fileString = buf |> Bytes.to_string;
   close_in(file);
   fileString;
