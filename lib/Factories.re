@@ -30,24 +30,24 @@ let file = (opts: Types.pathDescriptor, fabrics) => {
   let header = "Factories.file";
   let tags = Log.name("file");
 
+  L.debug(m => m("Factories.file used", ~tags, ~header));
+
   let errors = ref([]);
   fabrics
   |> List.iter(fabric => {
        let (name, content) = fabric();
-       let fileName =
-         Filename.concat(
-           Sys.getcwd(),
-           Filename.concat(
-             opts.path,
-             name
-             ++ (
-               opts.extension
-               |> Option.map(ext => "." ++ ext)
-               |> Option.value(~default="")
-             ),
-           ),
-         );
+
+       L.debug(m => m("Factories.file iter: %s", name, ~tags, ~header));
+
+       let path = Filename.concat(Sys.getcwd(), opts.path);
+       let ext =
+         opts.extension
+         |> Option.map(ext => "." ++ ext)
+         |> Option.value(~default="");
+       let fileName = Filename.concat(path, name ++ ext);
+
        L.debug(m => m("write %s to file", fileName, ~tags, ~header));
+
        try(content |> Fs.writeFile(fileName)) {
        | Sys_error(err) =>
          errors := [err, ...errors^];
