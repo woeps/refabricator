@@ -2,4 +2,4 @@
   (name refabricator)
   (flags (-w -40 -w +26))
   (public_name refabricator)
-  (libraries  pastel.lib console.lib omd))
+  (libraries pastel.lib console.lib omd logs))

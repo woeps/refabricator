@@ -1,6 +1,10 @@
 open Refabricator.Main;
 
-let () =
+let generate = () => {
+  Logs.app(m =>
+    m("REFABRICATE - static site generator for/in ReasonMl & Ocaml")
+  );
+
   [
     fromMd("pages")
     |> between((
@@ -14,4 +18,55 @@ let () =
     ),
   ]
   |> from
-|> toFiles({path: "generated", extension: Some("html")});
+  |> toFiles({path: "generated", extension: Some("html")});
+};
+
+let setup_log = (style_renderer, level) => {
+  Fmt_tty.setup_std_outputs(~style_renderer?, ());
+  Logs.set_level(level);
+  Logs.set_reporter(Logs_fmt.reporter());
+  ();
+};
+
+open Cmdliner;
+
+let setup_log =
+  Term.(
+    const(setup_log)
+    $ Fmt_cli.style_renderer(~docs="MISC", ())
+    $ Logs_cli.level(
+        ~env=
+          Arg.env_var(
+            ~docs="LOGGING",
+            ~doc="environment variable for option --verbosity.",
+            "REFABRICATE_LOG_LEVEL",
+          ),
+        ~docs="LOGGING",
+        (),
+      )
+  );
+
+let main = () =>
+  switch (
+    Term.(
+      eval((
+        const(generate) $ setup_log,
+        Term.info(
+          "refabricate",
+          ~doc="static site generator for/in ReasonMl & Ocaml",
+        ),
+      ))
+    )
+  ) {
+  | `Error(_) => exit(1)
+  | _ =>
+    exit(
+      if (Logs.err_count() > 0) {
+        1;
+      } else {
+        0;
+      },
+    )
+  };
+
+let () = main();
