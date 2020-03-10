@@ -12,6 +12,7 @@ Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Securit
 - Factory.file & Main.toFiles - support writing generated content to files - #1
 - Types.pathDescriptor as a reusable type for in- & output - #20
 - Fabricators.localPath: create fabrics based on files on the local filesystem - #6
+- use library for logging: [Logs](https://erratique.ch/software/logs) - #22
 
 ### Changed
 - README.md - moved some parts to CONTRIBUTING.md - commit @fb5aefa527f13d297c87bccae179193eb847fae2
@@ -19,7 +20,8 @@ Types of changes: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Securit
 - remove public name from binary and update test script - #3
 - rename module Refabricator to Main - #4
 - refactored Fabricators.md to Refabricators.md and use Types.pathDescriptor - #6
-- chaned Print.log to logAny and introduced new log(label, message) - #20
+- changed Print.log to logAny and introduced new log(label, message) - #20
+- rename binary to refabricate - #12
 
 ### Fixed
 - remove public name for example binary Ssg - #3
