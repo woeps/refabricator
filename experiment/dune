@@ -1,0 +1,3 @@
+(executable
+  (name experiment)
+  (libraries console.lib react))
