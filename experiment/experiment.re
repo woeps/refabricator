@@ -1,95 +1,101 @@
-/* TYPES */
-type meta = {name: string};
-type payload('t) = {
-  meta,
-  data: 't,
-};
-type fabric('t) = React.event(payload('t));
+open Lambda_streams;
+let foo = Finite.Sync.from_list([1, 2, 3]);
 
-type trigger = unit => unit;
+let bar = foo |> Finite.Sync.map(x => x * 2 - 1) |> Finite.Sync.to_list;
+Console.log(bar);
 
-type fabricator('t) = (fabric('t), trigger);
-
-type refabricator('a, 'b) = fabricator('a) => fabricator('b); // this will be usually done by using React's (partially applied) map or lift functions
-
-type factory('a, 'outOk, 'outErr) =
-  fabricator('a) => fabricator(Result.t('outOk, 'outErr));
-
-type err = [ | `writeError];
-
-/* COMMON FUNCTIONS */
-let fabricator = (l, f) => {
-  let (e, send) = React.E.create();
-  (e, () => l |> List.iter(x => x |> f |> send));
-};
-
-let refabricator = (f, (fabric, trigger)) => (
-  React.E.map(f, fabric),
-  trigger,
-);
-
-let map = (f, fabric) => React.E.map(f, fabric);
-
-let filter = (f, fabric) => React.E.filter(f, fabric);
-
-let all = fabricsAndTriggers => {
-  let fabric = fabricsAndTriggers |> List.map(fst) |> React.E.select;
-  let trigger = () =>
-    fabricsAndTriggers |> List.map(snd) |> List.iter(t => t());
-  (fabric, trigger);
-};
-
-let run = ((fabric, trigger)) => {
-  fabric
-  |> filter(p => p.data |> Result.is_error)
-  |> map(p => {
-       Console.error("Error in: " ++ p.meta.name);
-       p;
-     })
-  |> ignore;
-  trigger();
-};
-
-/* FACTORIES */
-let log: factory(string, string, err) =
-  refabricator(x => {
-    Console.log(x.data);
-    {...x, data: Ok(x.data)};
+let triple = Finite.Async.map(x => x ++ x ++ x);
+let between = (~before="", ~after="") =>
+  Finite.Async.map(x => before ++ x ++ after);
+let delay = delay =>
+  Finite.Async.map(x => {
+    Unix.sleep(delay);
+    x;
   });
 
-/* FABRICATORS */
-let fab1 = (path, count) =>
-  fabricator(List.init(count, c => (path, c)), ((p, c)) =>
-    {
-      meta: {
-        name: c |> string_of_int,
-      },
-      data: p ++ (c |> string_of_int),
-    }
-  );
+let all: list(Finite.Async.t('a)) => Finite.Async.t('a) =
+  streams => {
+    let openStreams = ref(List.length(streams));
+    Async.make(send => {
+      streams
+      |> List.iter(
+           Async.listen(
+             fun
+             | Signal.Data(_) as d => send(d)
+             | EndOfSignal as d => {
+                 openStreams := openStreams^ - 1;
+                 if (openStreams^ == 0) {
+                   send(d);
+                 };
+               },
+           ),
+         )
+    });
+  };
 
-/* REFABRICATORS */
-let parsedFiles = text =>
-  refabricator(fabric => {...fabric, data: fabric.data ++ text});
+let allP: list(Finite.Async.t('a)) => Finite.Async.t('a) =
+  streams => {
+    let openStreams = ref(streams |> List.length);
+    Async.make(send => {
+      let handle =
+        fun
+        | Signal.Data(_) as d => send(d)
+        | EndOfSignal as d => {
+            openStreams := openStreams^ - 1;
+            if (openStreams^ == 0) {
+              send(d);
+            };
+          };
+      streams
+      |> List.fold_left(
+           (cum, s) =>
+             s
+             |> Async.listen(evt => {
+                  cum;
+                  evt |> handle;
+                }),
+           (),
+         );
+    });
+  };
 
-let between = (~before, ~after) =>
-  refabricator(fabric => {...fabric, data: before ++ fabric.data ++ after});
+let combine = (streams: list(Finite.Async.t('a))): Finite.Async.t('a) =>
+  Async.make(send => {
+    let open_streams = ref(List.length(streams));
+    streams
+    |> List.iter(
+         Async.listen(
+           fun
+           | Signal.Data(_) as d => send(d)
+           | EndOfSignal as eos => {
+               open_streams := open_streams^ - 1;
+               if (open_streams^ == 0) {
+                 send(eos);
+               };
+             },
+         ),
+       );
+  });
 
-/* EXAMPLE */
-let main = () => {
-  Console.log("--] EXPERIMENT [--");
-  [
-    fab1("./pages", 42)
-    |> parsedFiles("..")
-    |> between(~before=">>>", ~after=""),
-    fab1("./someOtherPath", 42)
-    |> parsedFiles("...")
-    |> between(~before="YIPEEAH!: ", ~after="!"),
-  ]
-  |> all
-  |> between(~before="|+| ", ~after="|-|")
-  |> log
-  |> run;
-};
+Console.log("NEXT:");
+let x = Finite.Async.from_list(["a", "b", "c"]) |> triple;
 
-main();
+let _ =
+  all([
+    Finite.Async.from_list(["1", "2", "3"]) |> delay(2),
+    Finite.Async.from_list(["X", "Y", "Z"]) |> delay(1),
+  ])
+  |> Async.listen(Console.log);
+//|> triple
+/*|> Finite.Async.map(x => {
+    print_endline("test");
+    Console.log(x);
+    x;
+  })
+  */
+//|> Lambda_streams_async.Async.to_async_list
+//|> Console.log;
+
+/*let y =
+  x |> Finite.Async.map(x => x * 2) |> Finite.Async.map(x => Console.log(x));
+  */
