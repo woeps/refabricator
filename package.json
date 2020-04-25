@@ -18,10 +18,10 @@
     }
   },
   "scripts": {
-    "build-test": "esy b dune build bin/refabricate.exe",
-    "test": "#{self.target_dir}/default/bin/refabricate.exe -vv",
-    "build-experiment": "esy b dune build experiment/experiment.exe",
-    "experiment": "#{self.target_dir}/default/experiment/experiment.exe",
+    //"build-test": "esy b dune build bin/refabricate.exe",
+    //"test": "#{self.target_dir}/default/bin/refabricate.exe -vv",
+    "build-test": "esy b dune build experiment/experiment.exe",
+    "test": "#{self.target_dir}/default/experiment/experiment.exe",
     "doc": "esy dune build @doc",
     "doc:open": "esy xdg-open '#{self.target_dir}/default/_doc/_html/index.html'"
 

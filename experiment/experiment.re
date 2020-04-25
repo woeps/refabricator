@@ -11,10 +11,9 @@ module Fabricators = {
 };
 
 module Refabricators = {
-  let string2html = md => md |> Omd.of_string |> Omd.to_html;
-
   let md: S.t(string) => S.t(markdown) =
     stream => {
+      let string2html = md => md |> Omd.of_string |> Omd.to_html;
       stream
       |> Lwt_stream.filter_map_s(fileName => {
            switch (Filename.extension(fileName)) {
@@ -38,7 +37,7 @@ module Factories = {
   let log: S.t(string) => Lwt.t(unit) =
     stream => {
       stream
-      |> S.map_s(x => Lwt_io.printl("\n\nLOG:\n"++x))
+      |> S.map_s(x => Lwt_io.printl("\n\nLOG:\n" ++ x))
       |> S.to_list
       |> Lwt.map(_ => ());
     };
