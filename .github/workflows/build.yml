@@ -34,8 +34,8 @@ jobs:
         run: esy build
 
 # TODO: Reactivate test, when https://github.com/woeps/refabricator/issues/34 is resolved
-#     - name: Test
-#       run: esy test
+     - name: Test
+       run: esy build-test && esy test
 
       - name: Build docs
         run: esy doc

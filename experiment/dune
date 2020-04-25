@@ -1,3 +1,4 @@
 (executable
   (name experiment)
-  (libraries console.lib lambda_streams lambda_streams_async))
+  (libraries console.lib lwt lwt.unix)
+)

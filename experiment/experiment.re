@@ -1,101 +1,22 @@
-open Lambda_streams;
-let foo = Finite.Sync.from_list([1, 2, 3]);
+module S = Lwt_stream;
 
-let bar = foo |> Finite.Sync.map(x => x * 2 - 1) |> Finite.Sync.to_list;
-Console.log(bar);
+let p = Lwt_io.printl;
 
-let triple = Finite.Async.map(x => x ++ x ++ x);
-let between = (~before="", ~after="") =>
-  Finite.Async.map(x => before ++ x ++ after);
-let delay = delay =>
-  Finite.Async.map(x => {
-    Unix.sleep(delay);
-    x;
-  });
+let (stream, push) = S.create();
 
-let all: list(Finite.Async.t('a)) => Finite.Async.t('a) =
-  streams => {
-    let openStreams = ref(List.length(streams));
-    Async.make(send => {
-      streams
-      |> List.iter(
-           Async.listen(
-             fun
-             | Signal.Data(_) as d => send(d)
-             | EndOfSignal as d => {
-                 openStreams := openStreams^ - 1;
-                 if (openStreams^ == 0) {
-                   send(d);
-                 };
-               },
-           ),
-         )
-    });
-  };
+let main =
+  stream
+  |> S.map_s(x => Lwt_io.printl(string_of_float(x)) |> Lwt.map(_ => x))
+  |> S.map_s(x => Lwt_unix.sleep(10. -. x) |> Lwt.map(_ => x))
+  |> S.map_s(x => x |> string_of_float |> Lwt_io.printl |> Lwt.map(_ => x))
+  |> S.to_list
+  |> Lwt.map(l => Console.log(l));
 
-let allP: list(Finite.Async.t('a)) => Finite.Async.t('a) =
-  streams => {
-    let openStreams = ref(streams |> List.length);
-    Async.make(send => {
-      let handle =
-        fun
-        | Signal.Data(_) as d => send(d)
-        | EndOfSignal as d => {
-            openStreams := openStreams^ - 1;
-            if (openStreams^ == 0) {
-              send(d);
-            };
-          };
-      streams
-      |> List.fold_left(
-           (cum, s) =>
-             s
-             |> Async.listen(evt => {
-                  cum;
-                  evt |> handle;
-                }),
-           (),
-         );
-    });
-  };
+Lwt.async(() => {
+  [4., 2., 1., 0.]
+  |> List.map(x => Lwt_unix.sleep(x) |> Lwt.map(_ => push(Some(x))))
+  |> Lwt.all
+  |> Lwt.map(_ => push(None))
+});
 
-let combine = (streams: list(Finite.Async.t('a))): Finite.Async.t('a) =>
-  Async.make(send => {
-    let open_streams = ref(List.length(streams));
-    streams
-    |> List.iter(
-         Async.listen(
-           fun
-           | Signal.Data(_) as d => send(d)
-           | EndOfSignal as eos => {
-               open_streams := open_streams^ - 1;
-               if (open_streams^ == 0) {
-                 send(eos);
-               };
-             },
-         ),
-       );
-  });
-
-Console.log("NEXT:");
-let x = Finite.Async.from_list(["a", "b", "c"]) |> triple;
-
-let _ =
-  all([
-    Finite.Async.from_list(["1", "2", "3"]) |> delay(2),
-    Finite.Async.from_list(["X", "Y", "Z"]) |> delay(1),
-  ])
-  |> Async.listen(Console.log);
-//|> triple
-/*|> Finite.Async.map(x => {
-    print_endline("test");
-    Console.log(x);
-    x;
-  })
-  */
-//|> Lambda_streams_async.Async.to_async_list
-//|> Console.log;
-
-/*let y =
-  x |> Finite.Async.map(x => x * 2) |> Finite.Async.map(x => Console.log(x));
-  */
+Lwt_main.run(main);
