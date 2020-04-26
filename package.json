@@ -18,8 +18,6 @@
     }
   },
   "scripts": {
-    //"build-test": "esy b dune build bin/refabricate.exe",
-    //"test": "#{self.target_dir}/default/bin/refabricate.exe -vv",
     "build-test": "esy b dune build experiment/experiment.exe",
     "test": "#{self.target_dir}/default/experiment/experiment.exe",
     "doc": "esy dune build @doc",
