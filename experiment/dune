@@ -1,4 +1,4 @@
 (executable
   (name experiment)
-  (libraries console.lib lwt lwt.unix omd)
+  (libraries pastel.lib console.lib lwt lwt.unix omd)
 )
