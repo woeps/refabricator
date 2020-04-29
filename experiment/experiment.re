@@ -143,7 +143,31 @@ module Fabricators = {
 module Refabricators = {
   let markdown: Main.refabricator(string, Main.markdown) =
     stream => {
-      let string2html = (~name as _, ~content) => content |> Omd.of_string |> Omd.to_html;
+      let string2html = (~name as _, ~content) => {
+        let override: Omd_representation.element => option(string) =
+          element =>
+            switch (element) {
+            | Url(href, children, title) =>
+              let href = href ++ ".html" |> Omd_utils.htmlentities(~md=true);
+              let title =
+                title != ""
+                  ? " title=\""
+                    ++ (title |> Omd_utils.htmlentities(~md=true))
+                    ++ "\""
+                  : "";
+              Some(
+                "<a href=\""
+                ++ href
+                ++ "\""
+                ++ title
+                ++ ">"
+                ++ Omd_backend.html_of_md(children)
+                ++ "</a>",
+              );
+            | _ => None
+            };
+        content |> Omd.of_string |> Omd.to_html(~override);
+      };
       stream |> Main.refabricate(~refabricator="markdown", string2html);
     };
 
