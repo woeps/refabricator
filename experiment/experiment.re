@@ -26,16 +26,33 @@ module Main: {
   let fabricate: (~name: name, ~fabricator: string, 'content) => t('content);
 
   let refabricate:
-    (~refabricator: string, 'input => 'output, fabric('input)) =>
+    (
+      ~refabricator: string,
+      (~name: string, ~content: 'input) => 'output,
+      fabric('input)
+    ) =>
     fabric('output);
   let refabricate_async:
-    (~refabricator: string, 'input => Lwt.t('output), fabric('input)) =>
+    (
+      ~refabricator: string,
+      (~name: string, ~content: 'input) => Lwt.t('output),
+      fabric('input)
+    ) =>
     fabric('output);
 
   let factorize:
-    (~factory: string, 'input => 'output, fabric('input)) => fabric('output);
+    (
+      ~factory: string,
+      (~name: string, ~content: 'input) => 'output,
+      fabric('input)
+    ) =>
+    fabric('output);
   let factorize_async:
-    (~factory: string, 'input => Lwt.t('output), fabric('input)) =>
+    (
+      ~factory: string,
+      (~name: string, ~content: 'input) => Lwt.t('output),
+      fabric('input)
+    ) =>
     fabric('output);
 
   let all: list(fabric('content)) => fabric('content);
@@ -69,12 +86,12 @@ module Main: {
 
   let modify = (processor, f, t) => {
     name: t.name,
-    content: f(t.content),
+    content: f(~name=t.name, ~content=t.content),
     processedBy: [processor, ...t.processedBy],
   };
 
   let modify_async = (processor, f, t) =>
-    f(t.content)
+    f(~name=t.name, ~content=t.content)
     |> Lwt.map(content =>
          {name: t.name, content, processedBy: [processor, ...t.processedBy]}
        );
@@ -126,7 +143,7 @@ module Fabricators = {
 module Refabricators = {
   let markdown: Main.refabricator(string, Main.markdown) =
     stream => {
-      let string2html = md => md |> Omd.of_string |> Omd.to_html;
+      let string2html = (~name as _, ~content) => content |> Omd.of_string |> Omd.to_html;
       stream |> Main.refabricate(~refabricator="markdown", string2html);
     };
 
@@ -134,7 +151,7 @@ module Refabricators = {
     (~before: string, ~after: string) => Main.refabricator(string, string) =
     (~before, ~after, stream) =>
       stream
-      |> Main.refabricate(~refabricator="between", content =>
+      |> Main.refabricate(~refabricator="between", (~name as _, ~content) =>
            before ++ content ++ after
          );
 };
@@ -144,8 +161,8 @@ module Factories = {
   let log: Main.factory(string) =
     stream => {
       stream
-      |> Main.factorize_async(~factory="log", content =>
-           Lwt_io.printl("\n\nLOG:\n" ++ content)
+      |> Main.factorize_async(~factory="log", (~name, ~content) =>
+           Lwt_io.printl("\n\nLOG: " ++ name ++ "\n" ++ content)
            |> Lwt.map(_ => Ok(content))
          )
       |> S.to_list;
@@ -153,12 +170,7 @@ module Factories = {
 };
 
 let main =
-  [
-    Fabricators.localPath("./pages"),
-    Fabricators.localPath("./pages2"),
-    Fabricators.localPath("./pages2"),
-    Fabricators.localPath("./pages"),
-  ]
+  [Fabricators.localPath("./pages"), Fabricators.localPath("./pages2")]
   |> Main.all
   |> Refabricators.markdown
   |> Refabricators.between(
