@@ -1,61 +1,71 @@
 module P = Lwt;
 module S = Lwt_stream;
 
+type a = [ | `X];
+type f('a, 'b) = 'a => 'b constraint 'a = [> a];
+
+let f: f([> a], 'b) = _a => `Y;
+let x = f(`Z);
+
 module Main: {
+  //---------- GENERAL TYPES ----------
   type name = string;
   type processor =
     | Fabricator(string)
     | Refabricator(string)
     | Factory(string);
   type processors = list(processor);
-  type t('content) =
+  type t('content, 'error) =
     pri {
       name,
-      content: 'content,
+      content: result('content, 'error),
       processedBy: processors,
     };
-  type fabric('content) = Lwt_stream.t(t('content));
 
-  type refabricator('input, 'output) = fabric('input) => fabric('output);
+  //---------- FUNCTION TYPES ----------
+  // TODO: verify if a refabricator can output different errors than it's input fabric
+  type fabric('content, 'error) = Lwt_stream.t(t('content, 'error));
 
-  type factory('content) =
-    fabric('content) => Lwt.t(list(t(result('content, list(string)))));
+  type refabricator('input, 'output, 'error) =
+    fabric('input, 'error) => fabric('output, 'error);
 
-  type markdown = string;
+  type factory('content, 'error) =
+    fabric('content, 'error) => Lwt.t(list((name, option('error))));
 
-  let fabricate: (~name: name, ~fabricator: string, 'content) => t('content);
+  //type markdown = string;
+
+  //---------- FUNCTIONS ----------
+  let fabricate:
+    (~name: name, ~fabricator: string, result('content, 'error)) =>
+    t('content, 'error);
 
   let refabricate:
     (
       ~refabricator: string,
-      (~name: string, ~content: 'input) => 'output,
-      fabric('input)
+      (~name: string, ~content: 'input) => result('output, 'error),
+      fabric('input, 'error)
     ) =>
-    fabric('output);
+    fabric('output, 'error);
   let refabricate_async:
     (
       ~refabricator: string,
-      (~name: string, ~content: 'input) => Lwt.t('output),
-      fabric('input)
+      (~name: string, ~content: 'input) => Lwt_result.t('output, 'error),
+      fabric('input, 'error)
     ) =>
-    fabric('output);
+    fabric('output, 'error);
 
   let factorize:
     (
-      ~factory: string,
-      (~name: string, ~content: 'input) => 'output,
-      fabric('input)
+      t('input, 'error) => (name, option('error)),
+      fabric('input, 'error)
     ) =>
-    fabric('output);
+    Lwt.t(list((name, option('error))));
   let factorize_async:
     (
-      ~factory: string,
-      (~name: string, ~content: 'input) => Lwt.t('output),
-      fabric('input)
+      t('input, 'error) => Lwt.t((name, option('error))),
+      fabric('input, 'error)
     ) =>
-    fabric('output);
-
-  let all: list(fabric('content)) => fabric('content);
+    Lwt.t(list((name, option('error))));
 } = {
   //----------TYPES----------
   type name = string;
@@ -64,20 +74,22 @@ module Main: {
     | Refabricator(string)
     | Factory(string);
   type processors = list(processor);
-  type t('content) = {
+  type t('content, 'error) = {
     name,
-    content: 'content,
+    content: result('content, 'error),
     processedBy: processors,
   };
-  type fabric('content) = Lwt_stream.t(t('content));
+  //---------- FUNCTION TYPES ----------
+  type fabric('content, 'error) = Lwt_stream.t(t('content, 'error));
 
-  type refabricator('input, 'output) = fabric('input) => fabric('output);
-  type factory('content) =
-    fabric('content) => Lwt.t(list(t(result('content, list(string)))));
-  //-------------------------
+  type refabricator('input, 'output, 'error) =
+    fabric('input, 'error) => fabric('output, 'error);
+  type factory('content, 'error) =
+    fabric('content, 'error) => Lwt.t(list((name, option('error))));
 
-  type markdown = string;
+  // type markdown = string;
 
+  //----------- FUNCTIONS -----------
   let fabricate = (~name, ~fabricator, content) => {
     name,
     content,
@@ -85,15 +97,17 @@ module Main: {
   };
 
   let modify = (processor, f, t) => {
-    name: t.name,
-    content: f(~name=t.name, ~content=t.content),
+    ...t,
+    content: Result.bind(t.content, content => f(~name=t.name, ~content)),
     processedBy: [processor, ...t.processedBy],
   };
 
   let modify_async = (processor, f, t) =>
-    f(~name=t.name, ~content=t.content)
+    Lwt_result.bind(Lwt_result.lift(t.content), content =>
+      f(~name=t.name, ~content)
+    )
     |> Lwt.map(content =>
-         {name: t.name, content, processedBy: [processor, ...t.processedBy]}
+         {...t, content, processedBy: [processor, ...t.processedBy]}
        );
 
   let refabricate = (~refabricator, f, stream) =>
@@ -101,128 +115,160 @@ module Main: {
   let refabricate_async = (~refabricator, f, stream) =>
     stream |> Lwt_stream.map_s(modify_async(Refabricator(refabricator), f));
 
-  let factorize = (~factory, f, stream) =>
-    stream |> Lwt_stream.map(modify(Factory(factory), f));
-  let factorize_async = (~factory, f, stream) =>
-    stream |> Lwt_stream.map_s(modify_async(Factory(factory), f));
-
-  let rec all = streams =>
-    switch (streams) {
-    | [s1, s2, ...tail] => Lwt_stream.append(s1, all([s2, ...tail]))
-    | [s] => s
-    | [] => assert(false)
-    };
+  let factorize = (f, stream) =>
+    stream |> Lwt_stream.map(f) |> Lwt_stream.to_list;
+  let factorize_async = (f, stream) =>
+    stream |> Lwt_stream.map_s(f) |> Lwt_stream.to_list;
 };
 
 module Fabricators = {
-  let localPath: (~filterExtension: string=?, string) => Main.fabric(string) =
-    (~filterExtension=?, path) =>
-      Lwt_unix.files_of_directory(path)
-      |> S.filter(fileName =>
-           !(fileName |> Filename.concat(path) |> Sys.is_directory)
-         )
-      // TODO: Instead of filtering out directories, recursively read them in
-      //       and pass them down the stream
-      |> S.filter_map_s(fileName => {
-           let filePath = fileName |> Filename.concat(path);
-           switch (filterExtension, Filename.extension(fileName)) {
-           | (None, _) => P.return_some(filePath)
+  module LocalPath = {
+    let name = "LocalPath";
+    type error =
+      | PathNotFound(string);
+    let run:
+      (~filterExtension: string=?, string) =>
+      Main.fabric(string, [> | `LocalPath(error)]) =
+      (~filterExtension=?, path) =>
+        Lwt_unix.files_of_directory(path)
+        |> S.filter(fileName =>
+             !(fileName |> Filename.concat(path) |> Sys.is_directory)
+           )
+        // TODO: Instead of filtering out directories, recursively read them in
+        //       and pass them down the stream
+        |> S.filter_map_s(fileName => {
+             let filePath = fileName |> Filename.concat(path);
+             switch (filterExtension, Filename.extension(fileName)) {
+             | (None, _) => P.return_some(filePath)
 
-           | (Some(wanted), found) when wanted == found =>
-             P.return_some(filePath)
-           | (_, _) => P.return_none
-           };
-         })
-      |> S.map_s(fileName => {
-           Lwt_io.open_file(~mode=Input, fileName)
-           |> P.bind(_, Lwt_io.read)
-           |> P.map(Main.fabricate(~name=fileName, ~fabricator="localPath"))
-         });
+             | (Some(wanted), found) when wanted == found =>
+               P.return_some(filePath)
+             | (_, _) => P.return_none
+             };
+           })
+        |> S.map_s(fileName => {
+             Lwt_io.open_file(~mode=Input, fileName)
+             |> P.bind(_, Lwt_io.read)
+             |> P.map(content =>
+                  Ok(content)
+                  |> Main.fabricate(~name=fileName, ~fabricator="localPath")
+                )
+           });
+  };
 };
 
+// TODO: all refabricators call Main.refabricate at the end, could this be shortened by using a functor???
 module Refabricators = {
-  let markdown: Main.refabricator(string, Main.markdown) =
-    stream => {
-      let string2html = (~name as _, ~content) => {
-        let override: Omd_representation.element => option(string) =
-          element =>
-            switch (element) {
-            | Url(href, children, title) =>
-              let href = href ++ ".html" |> Omd_utils.htmlentities(~md=true);
-              let title =
-                title != ""
-                  ? " title=\""
-                    ++ (title |> Omd_utils.htmlentities(~md=true))
-                    ++ "\""
-                  : "";
-              Some(
-                "<a href=\""
-                ++ href
-                ++ "\""
-                ++ title
-                ++ ">"
-                ++ Omd_backend.html_of_md(children)
-                ++ "</a>",
-              );
-            | _ => None
-            };
-        content |> Omd.of_string |> Omd.to_html(~override);
+  module Markdown = {
+    let name = "Markdown";
+    type error =
+      | Error;
+    let run: Main.refabricator(string, string, [> | `MarkDown(error)]) =
+      stream => {
+        let string2html = (~name as _, ~content) => {
+          let override: Omd_representation.element => option(string) =
+            element =>
+              switch (element) {
+              | Url(href, children, title) =>
+                let href =
+                  href ++ ".html" |> Omd_utils.htmlentities(~md=true);
+                let title =
+                  title != ""
+                    ? " title=\""
+                      ++ (title |> Omd_utils.htmlentities(~md=true))
+                      ++ "\""
+                    : "";
+                Some(
+                  "<a href=\""
+                  ++ href
+                  ++ "\""
+                  ++ title
+                  ++ ">"
+                  ++ Omd_backend.html_of_md(children)
+                  ++ "</a>",
+                );
+              | _ => None
+              };
+          Ok(content |> Omd.of_string |> Omd.to_html(~override));
+        };
+        stream |> Main.refabricate(~refabricator=name, string2html);
       };
-      stream |> Main.refabricate(~refabricator="markdown", string2html);
-    };
+  };
 
-  let between:
-    (~before: string, ~after: string) => Main.refabricator(string, string) =
-    (~before, ~after, stream) =>
-      stream
-      |> Main.refabricate(~refabricator="between", (~name as _, ~content) =>
-           before ++ content ++ after
-         );
+  module Between = {
+    let name = "Between";
+    type error = unit;
+    let run:
+      (~before: string, ~after: string) =>
+      Main.refabricator(string, string, [> | `Between(error)]) =
+      (~before, ~after, stream) =>
+        stream
+        |> Main.refabricate(~refabricator=name, (~name as _, ~content) =>
+             Ok(before ++ content ++ after)
+           );
+  };
+
+  module All = {
+    let name = "All";
+    type error = unit;
+
+    let rec run:
+      list(Main.fabric('content, 'error)) => Main.fabric('content, 'error) =
+      streams =>
+        switch (streams) {
+        | [s1, s2, ...tail] => Lwt_stream.append(s1, run([s2, ...tail]))
+        | [s] => s
+        | [] => assert(false)
+        };
+  };
 };
 
+// TODO: change let name to let factory etc to use punning in factorize_async
 module Factories = {
-  // FIXME: this needs to put the result type inside of {... content ...} => use Main.factorize
-  let log: Main.factory(string) =
-    stream => {
-      stream
-      |> Main.factorize_async(~factory="log", (~name, ~content) =>
-           Lwt_io.printl("\n\nLOG: " ++ name ++ "\n" ++ content)
-           |> Lwt.map(_ => Ok(content))
-         )
-      |> S.to_list;
-    };
+  module Log = {
+    let name = "Log";
+    type error = unit;
+    let run: Main.factory(string, [> | `Log(error)]) =
+      stream => {
+        stream
+        |> Main.factorize_async(t =>
+             switch (t.content) {
+             | Ok(content) =>
+               Lwt_io.printl("\n\nLOG: " ++ t.name ++ "\n" ++ content)
+               |> Lwt.map(_ => (t.name, None))
+             | Error(err) => (t.name, Some(err)) |> Lwt.return
+             }
+           );
+      };
+  };
 };
 
 let main =
-  [Fabricators.localPath("./pages"), Fabricators.localPath("./pages2")]
-  |> Main.all
-  |> Refabricators.markdown
-  |> Refabricators.between(
+  [
+    Fabricators.LocalPath.run("./pages") /* Fabricators.LocalPath.run(
+      "../../../pages2",
+    ),*/
+  ]
+  |> Refabricators.All.run
+  |> Refabricators.Markdown.run
+  |> Refabricators.Between.run(
        ~before=
          "<html><head><title>Site generated with Refabricator</title></head><body><main>\n",
        ~after=
          "\n"
          ++ {|</main><footer>This site was generated by <a href="https://github.com/woeps/Refabricator">Refabricator</a>!</footer></body></html>|},
      )
-  |> Factories.log
+  |> Factories.Log.run
   |> Lwt.bind(
        _,
-       Lwt_list.map_p((x: Main.t(result('content, list(string)))) => {
+       Lwt_list.map_p(((name, maybeError)) => {
          Pastel.(
            (
-             switch (x.content) {
-             | Ok(_content) =>
-               <Pastel color=Green> {x.name ++ ":\n    OK"} </Pastel>
-             | Error(err) =>
-               <Pastel color=Red>
-                 {x.name
-                  ++ ":\n    EROR:"
-                  ++ List.fold_right(
-                       (e, acc) => acc ++ "\n        " ++ e,
-                       err,
-                       "",
-                     )}
-               </Pastel>
+             switch (maybeError) {
+             | None => <Pastel color=Green> {name ++ ":\n    OK"} </Pastel>
+             | Some(_err) =>
+               // TODO: Pretty Print errors
+               <Pastel color=Red> {name ++ ":\n    EROR"} </Pastel>
              }
            )
            |> Lwt_io.printl
